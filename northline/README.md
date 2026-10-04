@@ -53,3 +53,7 @@ This is an alpha: it has anonymous sessions, no persistent accounts or progressi
 ## Assets
 
 Three.js r170 and its loaders/utilities are vendored under `assets`; see `assets/THREE-LICENSE.txt`. The Soldier sample is the Three.js example character credited to Mixamo/Vanguard. The map, weapon silhouettes, visual effects, and gameplay code are custom procedural work. No claim of affiliation with weapon manufacturers is made.
+
+## Weapon artwork
+
+`weapons-art.js` builds the shared procedural weapon collection used by gameplay and `arsenal.html`. The gallery provides orbit/zoom controls and optic/foregrip previews. Close-up models contain approximately 68,000–98,000 triangles including both optics and other hidden attachment options. Third-person weapons use reduced tessellation. Static parts are merged by material; moving magazines, muzzle effects, and selectable attachments remain independent. These are stylized visual interpretations with family-based geometry, not scanned manufacturer assets.
