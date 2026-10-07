@@ -1,0 +1,4 @@
+Character skeleton, animation clips and hand geometry are adapted from the Mixamo Xbot asset distributed in the Three.js r170 examples:
+https://github.com/mrdoob/three.js/blob/r170/examples/models/gltf/Xbot.glb
+
+The fitted body surface, mask, eye lenses, suit material, emblems and custom traversal posing were created for this game. Three.js and its GLTFLoader use the MIT license; see ../vendor/THREE-LICENSE.txt.
