@@ -2,8 +2,8 @@ import {heroOverlay} from './events.mjs';
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/GLTFLoader.js';
 const V=T.Vector3;
-export async function createCharacter(hero,{gltf=null,fabricCanvas=null,surfaceBuffer=null}={}){
- const gltfData=gltf||await new GLTFLoader().loadAsync(new URL('./models/athletic-base.glb',import.meta.url).href);
+export async function createCharacter(hero,{gltf=null,fabricCanvas=null,surfaceBuffer=null,lowPoly=false}={}){
+ const gltfData=gltf||await new GLTFLoader().loadAsync(new URL(lowPoly?'./models/locomotion-rig.glb':'./models/athletic-base.glb',import.meta.url).href);
  const root=gltfData.scene,bones={},surfaces=[];root.updateMatrixWorld(true);root.traverse(o=>{if(o.isBone)bones[o.name.replace('mixamorig','')]=o;if(o.isSkinnedMesh)surfaces.push(o);});
  // Suit coordinates stay in the bind pose while the skeleton deforms the body.
  const cloth=fabricCanvas||document.createElement('canvas');cloth.width=cloth.height=256;const ctx=cloth.getContext('2d');ctx.fillStyle='#8080ff';ctx.fillRect(0,0,256,256);for(let y=0;y<256;y+=4)for(let x=0;x<256;x+=4){ctx.fillStyle=(x+y)%8?'#7987f7':'#8779f7';ctx.fillRect(x,y,2,3);}
@@ -37,7 +37,7 @@ export async function createCharacter(hero,{gltf=null,fabricCanvas=null,surfaceB
  diffuseColor.rgb*=base*(1.0+weave);
  `);
  };suit.customProgramCacheKey=()=> 'fitted-spider-suit-v3';
- const buffer=surfaceBuffer||await fetch(new URL('./models/fitted-surface.bin',import.meta.url)).then(r=>{if(!r.ok)throw new Error('Suit surface unavailable');return r.arrayBuffer();});
+ const buffer=surfaceBuffer||await fetch(new URL(lowPoly?'./models/fitted-low.bin':'./models/fitted-surface.bin',import.meta.url)).then(r=>{if(!r.ok)throw new Error('Suit surface unavailable');return r.arrayBuffer();});
  const header=new Uint32Array(buffer,0,2),count=header[0],indices=header[1];let offset=8;const geom=new T.BufferGeometry();
  for(const [name,n,type]of [['position',3,Float32Array],['normal',3,Float32Array],['uv',2,Float32Array],['skinIndex',4,Uint16Array],['skinWeight',4,Float32Array]]){const array=new type(buffer,offset,count*n);geom.setAttribute(name,new T.BufferAttribute(array,n));offset+=array.byteLength;}
  geom.setIndex(new T.BufferAttribute(new Uint32Array(buffer,offset,indices),1));geom.setAttribute('suitPosition',geom.attributes.position.clone());geom.computeVertexNormals();
@@ -45,18 +45,18 @@ export async function createCharacter(hero,{gltf=null,fabricCanvas=null,surfaceB
  const maskRoot=new T.Group();bones.Head.add(maskRoot);maskRoot.position.set(0,10.3,2.0);maskRoot.scale.setScalar(100);
  // Smooth skull-to-jaw silhouette, with no visible nose, mouth or robot panels.
  function maskSurface(x,y,lift=0){const yn=y/.12,taper=.82+.18*T.MathUtils.smoothstep(yn,-.85,.2),rx=.09*taper;return .10*Math.sqrt(Math.max(.025,1-x*x/(rx*rx)-yn*yn))+lift;}
- const maskGeo=new T.SphereGeometry(1,96,72),mp=maskGeo.attributes.position,bind=new Float32Array(mp.count*3);for(let i=0;i<mp.count;i++){let x=mp.getX(i),y=mp.getY(i),z=mp.getZ(i),taper=.82+.18*T.MathUtils.smoothstep(y,-.85,.2);x*=.09*taper;y*=.12;z*=.10;if(y<-.065)z*=.88;mp.setXYZ(i,x,y,z);bind.set([x,y+1.699,z+.01],i*3);}maskGeo.setAttribute('suitPosition',new T.BufferAttribute(bind,3));maskGeo.computeVertexNormals();const mask=new T.Mesh(maskGeo,suit);mask.castShadow=true;maskRoot.add(mask);
+ const maskGeo=new T.SphereGeometry(1,lowPoly?28:96,lowPoly?20:72),mp=maskGeo.attributes.position,bind=new Float32Array(mp.count*3);for(let i=0;i<mp.count;i++){let x=mp.getX(i),y=mp.getY(i),z=mp.getZ(i),taper=.82+.18*T.MathUtils.smoothstep(y,-.85,.2);x*=.09*taper;y*=.12;z*=.10;if(y<-.065)z*=.88;mp.setXYZ(i,x,y,z);bind.set([x,y+1.699,z+.01],i*3);}maskGeo.setAttribute('suitPosition',new T.BufferAttribute(bind,3));maskGeo.computeVertexNormals();const mask=new T.Mesh(maskGeo,suit);mask.castShadow=true;maskRoot.add(mask);
  const border=new T.MeshStandardMaterial({color:'#080c12',roughness:.34}),lens=new T.MeshPhysicalMaterial({color:'#edf4f4',roughness:.23,metalness:.12,clearcoat:1,clearcoatRoughness:.14});
- function eye(side,inset){const shape=new T.Shape();shape.moveTo(.014,.023);shape.bezierCurveTo(.031,.028,.065,.053,.082,.060);shape.bezierCurveTo(.080,.030,.078,-.012,.052,-.035);shape.bezierCurveTo(.029,-.052,.018,-.011,.014,.023);let geo=new T.ShapeGeometry(shape,40);
+ function eye(side,inset){const shape=new T.Shape();shape.moveTo(.014,.023);shape.bezierCurveTo(.031,.028,.065,.053,.082,.060);shape.bezierCurveTo(.080,.030,.078,-.012,.052,-.035);shape.bezierCurveTo(.029,-.052,.018,-.011,.014,.023);let geo=new T.ShapeGeometry(shape,lowPoly?12:40);
  // Tessellate the entire lens, then conform every interior vertex to the mask.
- for(let level=0;level<3;level++){const p=geo.attributes.position,ix=geo.index.array,out=[];for(let t=0;t<ix.length;t+=3){const a=new V().fromBufferAttribute(p,ix[t]),b=new V().fromBufferAttribute(p,ix[t+1]),c=new V().fromBufferAttribute(p,ix[t+2]),ab=a.clone().add(b).multiplyScalar(.5),bc=b.clone().add(c).multiplyScalar(.5),ca=c.clone().add(a).multiplyScalar(.5);for(const v of[a,ab,ca,ab,b,bc,ca,bc,c,ab,bc,ca])out.push(v.x,v.y,v.z);}geo.dispose();geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(out,3));geo.setIndex(Array.from({length:out.length/3},(_,i)=>i));}
+ for(let level=0;level<(lowPoly?1:3);level++){const p=geo.attributes.position,ix=geo.index.array,out=[];for(let t=0;t<ix.length;t+=3){const a=new V().fromBufferAttribute(p,ix[t]),b=new V().fromBufferAttribute(p,ix[t+1]),c=new V().fromBufferAttribute(p,ix[t+2]),ab=a.clone().add(b).multiplyScalar(.5),bc=b.clone().add(c).multiplyScalar(.5),ca=c.clone().add(a).multiplyScalar(.5);for(const v of[a,ab,ca,ab,b,bc,ca,bc,c,ab,bc,ca])out.push(v.x,v.y,v.z);}geo.dispose();geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(out,3));geo.setIndex(Array.from({length:out.length/3},(_,i)=>i));}
  const p=geo.attributes.position;for(let i=0;i<p.count;i++){let x=p.getX(i),y=p.getY(i);if(inset){x=.049+(x-.049)*.78;y=.005+(y-.005)*.79;}x*=side*.92;y*=.94;const z=maskSurface(x,y,inset?.0039:.002);p.setXYZ(i,x,y,z);}if(side<0){const idx=geo.index.array;for(let i=0;i<idx.length;i+=3){let t=idx[i+1];idx[i+1]=idx[i+2];idx[i+2]=t;}}
  geo.computeVertexNormals();const m=new T.Mesh(geo,inset?lens:border);maskRoot.add(m);}
  for(const side of [-1,1]){eye(side,false);eye(side,true);}
  // Emblems are skinned accessories placed on the chest and back bones.
  function attachRest(parent,obj,world){root.updateMatrixWorld(true);const local=parent.worldToLocal(world.clone());parent.add(obj);obj.position.copy(local);obj.scale.setScalar(100);}
- const emblem=new T.Group();const body=new T.Mesh(new T.SphereGeometry(1,24,18),border);body.scale.set(.013,.028,.004);emblem.add(body);const bulb=new T.Mesh(new T.SphereGeometry(1,24,18),border);bulb.position.y=.025;bulb.scale.set(.009,.010,.005);emblem.add(bulb);
- for(const s of[-1,1])for(let k=0;k<4;k++){const y=.022-k*.013,pts=[new V(s*.004,y,0),new V(s*(.027+k*.002),y+.022-k*.007,0),new V(s*(.049+k*.001),y+.063-k*.032,-.005)];emblem.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts),16,.0028,7,false),border));}
+ const emblem=new T.Group();const body=new T.Mesh(new T.SphereGeometry(1,lowPoly?10:24,lowPoly?8:18),border);body.scale.set(.013,.028,.004);emblem.add(body);const bulb=new T.Mesh(new T.SphereGeometry(1,lowPoly?10:24,lowPoly?8:18),border);bulb.position.y=.025;bulb.scale.set(.009,.010,.005);emblem.add(bulb);
+ for(const s of[-1,1])for(let k=0;k<4;k++){const y=.022-k*.013,pts=[new V(s*.004,y,0),new V(s*(.027+k*.002),y+.022-k*.007,0),new V(s*(.049+k*.001),y+.063-k*.032,-.005)];emblem.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts),lowPoly?8:16,.0028,lowPoly?4:7,false),border));}
  attachRest(bones.Spine2,emblem,new V(0,1.415,.112));const back=emblem.clone();attachRest(bones.Spine2,back,new V(0,1.385,-.113));back.scale.setScalar(75);back.rotation.y=Math.PI;
  // Replace the old primitive character completely.
  for(const old of [...hero.children])old.visible=false;hero.add(root);root.scale.setScalar(1.31);
