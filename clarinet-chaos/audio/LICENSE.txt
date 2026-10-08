@@ -1,0 +1,6 @@
+Clarinet samples: FluidR3 General MIDI soundfont, rendered by gleitz/midi-js-soundfonts.
+Source: https://github.com/gleitz/midi-js-soundfonts
+Soundfont authors: Frank Wen and contributors.
+License: Creative Commons Attribution 3.0 United States
+https://creativecommons.org/licenses/by/3.0/us/
+Selected MP3 notes extracted without changes; playback is shortened and mixed in the game.
