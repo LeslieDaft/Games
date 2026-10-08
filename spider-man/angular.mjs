@@ -56,11 +56,11 @@ export function installAngularHero({hero,head,arms,legs}){
  const jointMap={LeftArm:arms[0].pivot,RightArm:arms[1].pivot,LeftForeArm:arms[0].joint,RightForeArm:arms[1].joint,LeftUpLeg:legs[0].pivot,RightUpLeg:legs[1].pivot,LeftLeg:legs[0].joint,RightLeg:legs[1].joint,Head:head};
  let overlayBase=[];
  return {
-  beforePose(){for(const [node,q]of overlayBase)node.quaternion.copy(q);overlayBase=[];},
+  beforePose(){for(const [node,rotation]of overlayBase)node.rotation.copy(rotation);overlayBase=[];},
   gripWorld:()=>hero.localToWorld(grip.clone()),
   handWorld:i=>arms[i].joint.localToWorld(new T.Vector3(0,-.43,0)),
-  poseSwing(){for(let i=0;i<2;i++)solveArm(i,grip.clone().add(new T.Vector3(i?.035:-.035,0,0)));},
-  poseEvents(state,time){overlayBase=[hero,...new Set(Object.values(jointMap))].map(node=>[node,node.quaternion.clone()]);head.rotation.set(0,0,0);const overlay=heroOverlay(state,time);hero.position.y+=overlay.hip*.01;
+  poseSwing(){overlayBase=[...new Set(Object.values(jointMap))].map(node=>[node,node.rotation.clone()]);for(let i=0;i<2;i++)solveArm(i,grip.clone().add(new T.Vector3(i?.035:-.035,0,0)));},
+  poseEvents(state,time){overlayBase=[hero,...new Set(Object.values(jointMap))].map(node=>[node,node.rotation.clone()]);head.rotation.set(0,0,0);const overlay=heroOverlay(state,time);hero.position.y+=overlay.hip*.01;
    for(const[name,angles]of Object.entries(overlay.bones)){const joint=jointMap[name];if(joint)joint.quaternion.multiply(new T.Quaternion().setFromEuler(new T.Euler(...angles)));else if(name.startsWith('Spine'))hero.rotation.x+=angles[0];}
    hero.updateMatrixWorld(true);const e=state.event;
    if(e?.actor===state&&e.target){const weight=e.t<e.contact?Math.min(1,e.t/e.contact):Math.max(0,1-(e.t-e.contact)/(e.duration-e.contact));

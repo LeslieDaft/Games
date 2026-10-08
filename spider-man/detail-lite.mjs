@@ -1,4 +1,4 @@
-import {angularPerson} from './angular.mjs?v=angular-1';
+import {angularPerson} from './angular.mjs?v=angular-2';
 import * as T from './vendor/three.module.js';
 import {npcPose} from './events.mjs';
 import {dressBoss} from './bosses.mjs';

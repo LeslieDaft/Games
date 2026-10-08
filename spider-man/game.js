@@ -1,5 +1,5 @@
-import {installLiteDetail} from './detail-lite.mjs?v=angular-1';
-import {installAngularHero,crowdShape} from './angular.mjs?v=angular-1';
+import {installLiteDetail} from './detail-lite.mjs?v=angular-2';
+import {installAngularHero,crowdShape} from './angular.mjs?v=angular-2';
 import {BOSS_DEFS,assignBosses,resetBosses} from './bosses.mjs';
 import {roofLayout,roofColliders,boxCollider,containsXZ,topAt,clearRoofPoint} from './rooftops.mjs';
 import {EventDirector,npcPose,smooth} from './events.mjs';
@@ -183,9 +183,20 @@ else{const b=blockMap.get(Math.round(n.p.x/STEP)+','+Math.round(n.p.z/STEP));if(
 const pose=npcPose(n,time);const visible=(i<limit&&dist<500||n.mission||n.boss&&dist<550)&&!n.detailed;const walk=Math.sin(time*8+n.phase)*.45*moving;const specs=[[0,1.69,0,.21,.25,.21],[0,1.13,0,.30,.37,.19],[-.38,1.13,0,.10,.30,.10],[.38,1.13,0,.10,.30,.10],[-.16,.43,0,.12,.31,.12],[.16,.43,0,.12,.31,.12]];
 for(let k=0;k<6;k++)npcParts[k].setColorAt(i,new THREE.Color(k===0?n.color:k<4?(n.boss?.color||(n.hostile?'#702936':n.shirt)):(n.boss?.color||n.pants)));for(let k=0;k<6;k++){const a=specs[k];dummy.position.set(a[0],a[1],a[2]);dummy.position.applyAxisAngle(new V(1,0,0),pose.lean);dummy.position.applyAxisAngle(UP,n.dir);dummy.position.y+=pose.bob;dummy.position.add(n.p);const swing=k===2?pose.arms[0]:k===3?pose.arms[1]:k===4?pose.legs[0]:k===5?pose.legs[1]:0;dummy.rotation.set(pose.lean+swing,n.dir,pose.roll);dummy.scale.set(a[3],a[4],a[5]);if(!visible)dummy.scale.setScalar(0);dummy.updateMatrix();npcParts[k].setMatrixAt(i,dummy.matrix);}}
 for(const m of npcParts){m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;}npcParts[1].instanceColor.needsUpdate=true;}
-function animateHero(dt){angularHero?.beforePose();hero.position.copy(player.p);let diff=Math.atan2(Math.sin(player.yaw-hero.rotation.y),Math.cos(player.yaw-hero.rotation.y));hero.rotation.y+=diff*(1-Math.exp(-dt*12));const speed=Math.hypot(player.v.x,player.v.z),walk=Math.sin(time*(keys.ShiftLeft?14:10));const swinging=!!player.anchor;hero.rotation.x=THREE.MathUtils.damp(hero.rotation.x,player.ground?0:clamp(-player.v.y*.009,-.65,.65),6,dt);
+// Animation output must not become the next frame's yaw/pitch input: Euler
+// decomposition changes branches past 90 degrees and produces rapid flipping.
+let angularYaw=0,angularPitch=0,angularRoll=0,angularWalkPhase=0;
+function animateHero(dt){angularHero?.beforePose();hero.position.copy(player.p);
+const previousYaw=angularHero?angularYaw:hero.rotation.y,diff=Math.atan2(Math.sin(player.yaw-previousYaw),Math.cos(player.yaw-previousYaw));
+const yaw=previousYaw+diff*(1-Math.exp(-dt*12)),speed=Math.hypot(player.v.x,player.v.z),swinging=!!player.anchor;
+if(angularHero)angularWalkPhase+=dt*(keys.ShiftLeft?14:10);
+const walk=Math.sin(angularHero?angularWalkPhase:time*(keys.ShiftLeft?14:10));
+const pitch=THREE.MathUtils.damp(angularHero?angularPitch:hero.rotation.x,player.ground?0:clamp(-player.v.y*.009,-.65,.65),6,dt);
+if(angularHero){angularYaw=yaw;angularPitch=pitch;angularRoll=player.dodge>0?Math.sin(player.dodge/.55*Math.PI)*.9:THREE.MathUtils.damp(angularRoll,0,12,dt);hero.rotation.set(angularPitch,angularYaw,angularRoll,'YXZ');}
+else{hero.rotation.y=yaw;hero.rotation.x=pitch;}
+
 for(let i=0;i<2;i++){if(angularHero){arms[i].pivot.rotation.y=0;arms[i].joint.rotation.y=arms[i].joint.rotation.z=0;legs[i].pivot.rotation.y=legs[i].pivot.rotation.z=0;legs[i].joint.rotation.y=legs[i].joint.rotation.z=0;}const side=i===0?-1:1;arms[i].pivot.rotation.z=THREE.MathUtils.damp(arms[i].pivot.rotation.z,swinging?side*2.65:player.ground?side*.08:side*.85,10,dt);arms[i].pivot.rotation.x=player.attack>0?(i===1?-1.8:0):player.ground?walk*side*Math.min(speed/15,.7):swinging?-.2:-.35;arms[i].joint.rotation.x=swinging?-.1:player.attack>0?-.6:-.2;legs[i].pivot.rotation.x=player.ground?walk*-side*Math.min(speed/14,.8):.25+side*.3;legs[i].joint.rotation.x=player.ground?Math.max(0,walk*side)*.7:.65+side*.3;}
-if(player.dodge>0)hero.rotation.z=Math.sin(player.dodge/.55*Math.PI)*.9;else hero.rotation.z=THREE.MathUtils.damp(hero.rotation.z,0,12,dt);
+if(!angularHero){if(player.dodge>0)hero.rotation.z=Math.sin(player.dodge/.55*Math.PI)*.9;else hero.rotation.z=THREE.MathUtils.damp(hero.rotation.z,0,12,dt);}
 if(swinging){const up=player.anchor.clone().sub(player.p).normalize(),facing=new V(Math.sin(player.yaw),0,Math.cos(player.yaw));facing.addScaledVector(up,-facing.dot(up));if(facing.lengthSq()<.001)facing.set(0,0,1).addScaledVector(up,-up.z);facing.normalize();const right=new V().crossVectors(up,facing).normalize();facing.crossVectors(right,up).normalize();hero.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right,up,facing));}
 if(angularHero&&!swinging)angularHero.poseEvents(player,time);
 if(swinging&&angularHero){angularHero.poseSwing();hero.updateMatrixWorld(true);}
