@@ -8,13 +8,35 @@ function initAudio(){if(!audio){audio=new (window.AudioContext||window.webkitAud
 function sound(hand,click=false){if(!audio||audio.state!=='running')return;const t=audio.currentTime;
 function tone(freq,end,duration,level,type='sine'){const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(end,t+Math.min(duration,.12));g.gain.setValueAtTime(level,t);g.gain.exponentialRampToValueAtTime(.001,t+duration);o.connect(g);g.connect(master);o.start(t);o.stop(t+duration+.02)}
 function hiss(duration,level,cutoff){const n=audio.createBufferSource(),f=audio.createBiquadFilter(),g=audio.createGain();n.buffer=noise;n.loop=true;f.type='highpass';f.frequency.value=cutoff;g.gain.setValueAtTime(level,t);g.gain.exponentialRampToValueAtTime(.001,t+duration);n.connect(f);f.connect(g);g.connect(master);n.start(t);n.stop(t+duration+.02)}
+function acousticDrum(kind){
+const bass=kind==='bass',variation=1+(Math.random()-.5)*.018;
+const bus=audio.createGain(),bodyFilter=audio.createBiquadFilter();
+bus.gain.value=bass?.85:.72;bodyFilter.type='lowpass';bodyFilter.frequency.value=bass?2400:4200;bodyFilter.Q.value=.5;bus.connect(bodyFilter);bodyFilter.connect(master);
+// Damped membrane modes: a brief tension change followed by a stable body tone.
+const modes=bass?[[58,1,.52],[92,.36,.28],[124,.22,.19],[173,.10,.12],[238,.055,.075]]:[[112,.8,.52],[178,.40,.35],[229,.22,.24],[296,.13,.17],[385,.075,.10]];
+for(const [freq,amp,decay] of modes){
+const o=audio.createOscillator(),g=audio.createGain();o.type='sine';
+o.frequency.setValueAtTime(freq*variation*(bass?1.16:1.09),t);
+o.frequency.exponentialRampToValueAtTime(freq*variation,t+.022);
+g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(amp,t+.002);
+g.gain.exponentialRampToValueAtTime(Math.max(.0001,amp*.001),t+decay);
+o.connect(g);g.connect(bus);o.start(t);o.stop(t+decay+.015);
+}
+// Felt beater / stick contact, with a low thud and a brief filtered skin attack.
+for(const [freq,q,amp,decay] of bass?[[380,.65,.36,.026],[1700,.7,.13,.012]]:[[750,.8,.29,.024],[2600,.65,.14,.013]]){
+const n=audio.createBufferSource(),f=audio.createBiquadFilter(),g=audio.createGain();
+n.buffer=noise;f.type='bandpass';f.frequency.value=freq;f.Q.value=q;
+g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(amp,t+.001);
+g.gain.exponentialRampToValueAtTime(.0001,t+decay);
+n.connect(f);f.connect(g);g.connect(bus);n.start(t,Math.random()*.02);n.stop(t+decay+.01);
+}}
 if(click){tone(hand?1100:750,650,.035,.09);return}
 const drum=$('instrument').value;
 if(drum==='snare'){tone(185+(hand?9:0),75,.12,.5);hiss(.16,.72,1100)}
-else if(drum==='bass'){tone(125,42,.5,.9);tone(65,40,.3,.22);hiss(.025,.12,1500)}
+else if(drum==='bass'){acousticDrum('bass')}
 else if(drum==='cymbal'){hiss(1.25,.43,5500);for(const f of [3170,4310,5870,7390])tone(f,f*.98,.7,.035,'square')}
 else if(drum==='timpani'){for(const [f,g] of [[110,.55],[165,.19],[220,.1],[286,.06]])tone(f*1.06,f,1.15,g);hiss(.045,.11,500)}
-else if(drum==='tom'){tone(230,112,.38,.7);tone(355,180,.22,.17);hiss(.045,.16,1600)}}
+else if(drum==='tom'){acousticDrum('tom')}}
 $('volume').oninput=()=>{if(master)master.gain.value=+$('volume').value/100*.65};
 let tempoRate=1,difficultyRate=4;let state='ready',origin=0,frozen=0,events=[],bars=[],nextTime=0,nextBar=0,hand=0,health=100,combo=0,hits=0,total=0,weighted=0,lastTick=-1,feedbackUntil=0,lastFrame=0;let best=0;
 function readDifficulty(){const v=+$('difficultyRate').value;return v===0?0:17-v}
