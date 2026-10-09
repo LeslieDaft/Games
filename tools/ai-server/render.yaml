@@ -1,0 +1,25 @@
+# Select this file as the Blueprint path for the homework AI service.
+# This does not modify the existing Northline deployment.
+# After deployment, configure persistent abuse limits and verify real hints
+# before setting tools/config.json aiBaseUrl to the returned service URL.
+services:
+  - type: web
+    name: daft-tools-ai
+    runtime: node
+    rootDir: tools/ai-server
+    plan: free
+    buildCommand: node --check server.mjs
+    startCommand: node server.mjs
+    healthCheckPath: /health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4.1-mini
+      - key: ALLOWED_ORIGIN
+        value: https://lesliedaft.github.io
+      - key: DAILY_MODEL_CALL_LIMIT
+        value: "200"
