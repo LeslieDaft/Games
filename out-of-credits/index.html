@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Out of Credits — Daft Arcade</title>
+<meta name="description" content="One tiny chatbot. An unreasonable amount of ambition. Build an AI empire in this free incremental clicker.">
+<meta name="theme-color" content="#101718">
+<link rel="icon" href="../favicon.svg"><link rel="stylesheet" href="style.css">
+<script defer src="engine.js"></script><script defer src="scene.js"></script><script defer src="app.js"></script>
+</head>
+<body>
+<header class="topbar"><a class="arcade" href="../" aria-label="Back to Daft Arcade">← <span>D / A</span> ARCADE</a><div class="wordmark"><i>✳</i> OUT OF CREDITS <span class="pill">IDLE AI TYCOON</span></div><div class="top-actions"><button id="sound" class="icon-btn" aria-pressed="false">Sound off</button><button id="help" class="icon-btn" aria-label="How to play">?</button><button id="settings" class="icon-btn" aria-label="Settings">⚙</button></div></header>
+<main>
+<div class="intro"><div><p class="eyebrow">SMALL CHATBOT. UNREASONABLE AMBITION.</p><h1>Let’s make something<span>.</span></h1></div><div id="save-status" class="save-status">● Progress saves on this browser</div></div>
+<div class="dashboard">
+<section class="lab panel" aria-label="Your AI lab">
+<div class="lab-top"><div><span class="eyebrow">AVAILABLE CREDITS</span><div class="balance"><span id="credits">5</span><span class="credit-symbol">✳</span></div></div><div class="production"><span><b id="cps">0</b> / second</span><span><b id="per-click">1</b> / click</span></div></div>
+<div class="scene-wrap"><div class="scene-label"><span class="live-dot"></span><span id="stage-name">Bedroom startup</span><span id="generation">GEN 01</span></div><canvas id="lab-canvas" aria-label="An animated AI lab that grows as you buy computers and agents" role="img">Your AI lab grows with your upgrades.</canvas><div id="floating" aria-hidden="true"></div><div class="model-status"><span id="model-line">Ready when you are, boss.</span><span id="agent-count">0 agents online</span></div></div>
+<div class="generate-area"><button id="generate" class="generate"><span class="generate-icon">✳</span><span>GENERATE CREDITS<small>Click, tap, or press Space</small></span><span class="generate-plus" id="generate-plus">+1 ↗</span></button><p class="hint" id="next-tip">Your first laptop costs 15 credits. Give that button a few clicks.</p></div>
+<div class="personality-wrap"><label for="personality">AI PERSONALITY</label><select id="personality"><option value="speedster">⚡ Speedster</option><option value="thinker">◈ Deep Thinker</option><option value="creative">✦ Creative Genius</option><option value="chaotic">✹ Chaotic AI</option></select><span id="personality-info"></span></div>
+</section>
+<section class="shop panel" aria-label="Build your empire">
+<div class="panel-heading"><div><span class="eyebrow">REINVEST. REPEAT.</span><h2>Build your empire</h2></div><span class="shop-spark">↗</span></div>
+<div class="tabs" role="tablist" aria-label="Shop categories"><button class="active" role="tab" aria-selected="true" data-tab="hardware" id="tab-hardware" aria-controls="shop-items">Hardware</button><button role="tab" aria-selected="false" data-tab="agents" id="tab-agents" aria-controls="shop-items">Agents</button><button role="tab" aria-selected="false" data-tab="upgrades" id="tab-upgrades" aria-controls="shop-items">Upgrades</button><button role="tab" aria-selected="false" data-tab="projects" id="tab-projects" aria-controls="shop-items">Projects</button></div>
+<div class="shop-toolbar"><span id="shop-caption">More compute. More credits.</span><div id="quantity-control" aria-label="Purchase quantity"><button class="selected" data-qty="1" aria-pressed="true">×1</button><button data-qty="10" aria-pressed="false">×10</button></div></div>
+<div id="shop-items" class="shop-items" role="tabpanel" aria-labelledby="tab-hardware"></div>
+<div class="shop-footer"><span id="project-count">0 creations shipped</span><span id="total-compute">0 machines humming</span></div>
+</section>
+</div>
+<div class="sidequests">
+<section class="panel cook-panel"><div class="card-top"><span class="eyebrow">A LITTLE MORE THINKING…</span><span class="mini-icon orange">♨</span></div><h2>Let it cook</h2><p>6 safe seconds. After that, bigger rewards… but your AI might start rambling. Your bank is always safe.</p><div class="cook-meter" role="progressbar" aria-label="Response thinking time" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0"><div id="cook-progress"></div><span class="safe-mark"></span></div><div class="cook-readout"><span id="cook-status">The kitchen is open.</span><b id="cook-value">0 credits</b></div><button id="cook" class="secondary">Start thinking <span>↗</span></button></section>
+<section class="panel prompt-panel"><div class="card-top"><span class="eyebrow">THE PROMPT LAB</span><span class="mini-icon">✧</span></div><h2>Make something weird.</h2><p>Mix a subject, an activity, and a place. Discover secret combinations for an extra credit bonus.</p><div class="prompt-selects"><select id="prompt-a" aria-label="Prompt subject"><option value="0">A hamster</option><option value="1">A robot</option><option value="2">A potato</option></select><select id="prompt-b" aria-label="Prompt activity"><option value="0">running a bank</option><option value="1">writing a song</option><option value="2">building a game</option></select><select id="prompt-c" aria-label="Prompt location"><option value="0">on Mars</option><option value="1">underwater</option><option value="2">in a server room</option></select></div><div class="prompt-readout" id="prompt-result">One perfectly normal request, coming right up.</div><button id="prompt-submit" class="secondary">Run prompt <span>↗</span></button></section>
+<section class="panel generation-panel"><div class="card-top"><span class="eyebrow">THE NEXT BIG THING</span><span class="mini-icon">◈</span></div><h2>Train. Launch. Repeat.</h2><p>Launch a new generation at 1M earned this run. Trade your setup for permanent intelligence.</p><div class="intel"><b id="intelligence">0</b><span>intelligence<br><strong id="intel-bonus">+0% forever</strong></span></div><div class="prestige-track"><div id="prestige-progress"></div></div><button id="prestige" class="secondary" disabled>Earn 1M to launch <span>↗</span></button></section>
+</div>
+<section class="rival panel"><div class="rival-icon">R.</div><div class="rival-copy"><span class="eyebrow">RIVAL WATCH / RAMBLE INC.</span><h3 id="rival-title">They have a pitch deck. You have a laptop.</h3><p id="rival-description">Reach 1,000 lifetime credits to take your first customer.</p></div><div class="rival-meter"><div class="rival-track"><div id="rival-progress"></div></div><span id="rival-count">0 / 1,000</span></div><button id="rival-claim" class="small-button" disabled>In progress</button></section>
+<div class="event-banner" id="event-banner" hidden><span>✦</span><div><b id="event-name"></b><p id="event-description"></p></div><button id="event-claim">Collect bonus ↗</button></div>
+<footer><span>OUT OF CREDITS <b>by Daft Arcade</b></span><span>Fictional credits. Very real button clicking.</span><a href="../">All games ↗</a></footer>
+</main><div id="toasts" role="status" aria-live="polite"></div>
+<dialog id="dialog"><div id="dialog-content"></div><button id="dialog-close" class="secondary">Back to the lab</button></dialog>
+<noscript>This game needs JavaScript enabled.</noscript>
+</body></html>
