@@ -6,6 +6,8 @@
   const MAX_OWNED = 10000;
   const PRESTIGE_BASE = 1000000;
   const PRESTIGE_GROWTH = 4;
+  const PRESTIGE_REWARD_BASE = 2;
+  const PRESTIGE_REWARD_GROWTH = 2;
   const HARDWARE = [
     { id: 'laptop', name: 'Ancient laptop', description: 'The fan screams. The credits trickle in.', icon: '💻', cost: 15, cps: 1, growth: 1.16 },
     { id: 'gaming', name: 'Gaming PC', description: 'RGB makes the model 100% more confident.', icon: '🖥️', cost: 280, cps: 8, growth: 1.17 },
@@ -183,11 +185,16 @@
       const cps = add(hardwareCps, agentCps);
       const prestigeCost = Math.min(LIMIT, PRESTIGE_BASE * Math.pow(PRESTIGE_GROWTH, s.generation - 1));
       const nextPrestigeCost = Math.min(LIMIT, prestigeCost * PRESTIGE_GROWTH);
+      const prestigeReward = Math.min(Number.MAX_SAFE_INTEGER - s.intelligence,
+        PRESTIGE_REWARD_BASE * Math.pow(PRESTIGE_REWARD_GROWTH, s.generation - 1));
+      const nextPrestigeReward = Math.min(Number.MAX_SAFE_INTEGER - s.intelligence - prestigeReward,
+        prestigeReward * PRESTIGE_REWARD_GROWTH);
       let highest = -1;
       s.hardware.forEach((n, i) => { if (n > 0) highest = i; });
       return { perClick, cps, hardwareCps, agentCps, clickMult, hardwareMult, agentMult, multiplier, projectBonus,
         prestigeCost, nextPrestigeCost, prestigeGrowth: PRESTIGE_GROWTH,
-        prestigeGain: s.runEarned < prestigeCost ? 0 : Math.max(0, Math.min(Number.MAX_SAFE_INTEGER - s.intelligence, Math.floor(Math.sqrt(s.runEarned / prestigeCost)))),
+        prestigeReward, nextPrestigeReward, prestigeRewardGrowth: PRESTIGE_REWARD_GROWTH,
+        prestigeGain: s.runEarned < prestigeCost ? 0 : prestigeReward,
         stage: highest < 0 ? terminal : HARDWARE[highest], nextStage: HARDWARE[highest + 1] || null,
         stageIndex: highest, critChance: s.personality === 'chaotic' ? 0.20 : 0.04,
         critMultiplier: s.personality === 'chaotic' ? 5 : 3,

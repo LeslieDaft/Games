@@ -5,3 +5,5 @@
 .shop-group{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin:8px 9px 0;padding:10px 0 3px}.shop-row+.shop-group{margin-top:15px;border-top:1px solid var(--line)}.production-total{padding-top:7px;border-top:1px solid var(--line)}#shop-caption{line-height:1.4}.production{font-size:10px;gap:6px}@media(max-width:460px){.production{font-size:9px}.production b{font-size:12px}.lab-top{gap:8px}.balance{font-size:44px}.credit-symbol{font-size:27px}.shop-toolbar{gap:8px;font-size:9px}}
 
 @media(max-width:460px){.personality-wrap{padding:12px 15px 18px}.personality-heading{align-items:flex-start;flex-direction:column;gap:5px}.personality-choice{padding:10px 8px}.personality-choice>span{font-size:10px}.personality-choice small{font-size:9px}}
+
+#intel-total,#prestige-earned{font-size:10px;line-height:1.5;color:var(--muted)}#intel-total{margin:0 0 15px}#prestige-earned{margin:7px 0 18px}.generation-panel .intel{margin-bottom:7px}
