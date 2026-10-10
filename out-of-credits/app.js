@@ -31,35 +31,46 @@
  function handle(result,quiet=false){if(result?.message&&!quiet)toast(result.message);if(result?.ok){sound(true);save();}render();return result;}
  function total(list){return list.reduce((a,b)=>a+b,0);}
  function stageIndex(stats){if(typeof stats.stage==='number')return stats.stage;return Math.max(0,HARDWARE.findIndex(x=>x.id===stats.stage?.id));}
+ function shopEntries(){
+  const upgrades=category=>UPGRADES.filter(item=>item.category===category).map(item=>({item,kind:'upgrade'}));
+  if(activeTab==='hardware')return [...HARDWARE.map((item,index)=>({item,index,kind:'hardware'})),...upgrades('hardware')];
+  if(activeTab==='agents')return [...AGENTS.map((item,index)=>({item,index,kind:'agent'})),...upgrades('agent')];
+  if(activeTab==='upgrades')return upgrades('click');
+  return PROJECTS.map(item=>({item,kind:'project'}));
+ }
  function buildShop(){
-  const list={hardware:HARDWARE,agents:AGENTS,upgrades:UPGRADES,projects:PROJECTS}[activeTab];
-  const descriptions={hardware:'More compute. More credits.',agents:'A little help from your digital coworkers.',upgrades:'Make every click and every machine count.',projects:'Spend credits. Ship weird things. Boost all income.'};
+  const list=shopEntries();
+  const descriptions={hardware:'Machines and upgrades · hardware income only.',agents:'Workers and upgrades · agent income only.',upgrades:'Click upgrades · credits per click only.',projects:'Global bonuses · boost all three income sources.'};
   $('shop-caption').textContent=descriptions[activeTab];$('quantity-control').hidden=!['hardware','agents'].includes(activeTab);
   $('shop-items').setAttribute('aria-labelledby','tab-'+activeTab);
-  $('shop-items').innerHTML=list.map((item,i)=>`<div class="shop-row" data-index="${i}"><div class="item-icon" aria-hidden="true">${escape(item.icon||'✳')}</div><div class="item-copy"><div class="item-title">${escape(item.name)} <span class="owned"></span></div><p>${escape(item.description)}</p><span class="item-benefit"></span></div><button class="buy" data-buy="${i}" aria-label="Buy ${escape(item.name)}"></button></div>`).join('');
+  $('shop-items').innerHTML=list.map(({item,kind},i)=>{
+   const heading=(i===0||kind!==list[i-1].kind)?`<h3 class="shop-group">${kind==='hardware'?'Machines':kind==='agent'?'AI workers':kind==='project'?'Creations':activeTab==='hardware'?'Hardware upgrades':activeTab==='agents'?'Agent upgrades':'Click upgrades'}</h3>`:'';
+   return heading+`<div class="shop-row" data-index="${i}"><div class="item-icon" aria-hidden="true">${escape(item.icon||'✳')}</div><div class="item-copy"><div class="item-title">${escape(item.name)} <span class="owned"></span></div><p>${escape(item.description)}</p><span class="item-benefit"></span></div><button class="buy" data-buy="${i}" aria-label="Buy ${escape(item.name)}"></button></div>`;
+  }).join('');
   updateShop();
  }
  function updateShop(){
-  const list={hardware:HARDWARE,agents:AGENTS,upgrades:UPGRADES,projects:PROJECTS}[activeTab];
+  const list=shopEntries();
   $('shop-items').querySelectorAll('.shop-row').forEach(row=>{
-   const i=Number(row.dataset.index),item=list[i];let cost,owned,built=false,benefit;
-   if(activeTab==='hardware'||activeTab==='agents'){
-    owned=game.s[activeTab][i]||0;cost=activeTab==='hardware'?game.quoteHardware(i,quantity):game.quoteAgent(i,quantity);
-    benefit=`+${fmt(item.cps)} base credits / sec each`;
+   const entry=list[Number(row.dataset.index)],{item,kind,index}=entry;let cost,owned,built=false,benefit;
+   const repeatable=kind==='hardware'||kind==='agent';
+   if(repeatable){
+    owned=(kind==='hardware'?game.s.hardware:game.s.agents)[index]||0;cost=kind==='hardware'?game.quoteHardware(index,quantity):game.quoteAgent(index,quantity);
+    benefit=`+${fmt(item.cps)} base ${kind==='hardware'?'hardware':'agent'} credits / sec each`;
    }else{
-    built=game.s[activeTab].includes(item.id);owned=built?'✓':'';cost=item.cost;
-    benefit=activeTab==='projects'?`+${Math.round(item.bonus*100)}% base income${game.s.personality==='creative'?' · creative bonus active':''}`:[item.clickMult>1?`×${item.clickMult} base click power`:'',item.cpsMult>1?`×${item.cpsMult} passive income`:''].filter(Boolean).join(' · ');
+    built=(kind==='project'?game.s.projects:game.s.upgrades).includes(item.id);owned=built?'✓':'';cost=item.cost;
+    benefit=kind==='project'?`+${Math.round(item.bonus*100)}% to all three sources${game.s.personality==='creative'?' · doubled in creative mode':''}`:item.category==='click'?`×${item.clickMult} credits / click only`:item.category==='hardware'?`×${item.hardwareMult} hardware income only`:`×${item.agentMult} agent income only`;
    }
    row.classList.toggle('built',built);row.querySelector('.owned').textContent=owned;row.querySelector('.owned').hidden=owned==='';
    row.querySelector('.item-benefit').textContent=benefit;
-   const button=row.querySelector('.buy');button.textContent=built?(activeTab==='projects'?'Created ✓':'Owned ✓'):`${fmt(cost)} ✳`;button.disabled=built||game.s.credits<cost;
-   button.title=built?'Already owned':`Buy ${['hardware','agents'].includes(activeTab)?quantity+' × ':''}${item.name} for ${Math.ceil(cost).toLocaleString()} credits`;
+   const button=row.querySelector('.buy');button.textContent=built?(kind==='project'?'Created ✓':'Owned ✓'):`${fmt(cost)} ✳`;button.disabled=built||game.s.credits<cost;
+   button.title=built?'Already owned':`Buy ${repeatable?quantity+' × ':''}${item.name} for ${Math.ceil(cost).toLocaleString()} credits`;
   });
  }
  function render(){
   const s=game.s,st=game.stats();
   $('credits').textContent=fmt(s.credits);$('credits').title=Math.floor(s.credits).toLocaleString()+' credits';
-  $('cps').textContent=fmt(st.cps);$('per-click').textContent=fmt(st.perClick);$('generate-plus').textContent='+'+fmt(st.perClick)+' ↗';
+  $('cps').textContent=fmt(st.cps);$('hardware-cps').textContent=fmt(st.hardwareCps);$('agent-cps').textContent=fmt(st.agentCps);$('per-click').textContent=fmt(st.perClick);$('generate-plus').textContent='+'+fmt(st.perClick)+' ↗';
   const stage=stageIndex(st);$('stage-name').textContent=titles[Math.min(stage,7)];$('generation').textContent='GEN '+String(s.generation).padStart(2,'0');
   const agentCount=total(s.agents),hardwareCount=total(s.hardware);
   $('agent-count').textContent=agentCount+' agent'+(agentCount===1?'':'s')+' online';$('total-compute').textContent=hardwareCount+' machine'+(hardwareCount===1?'':'s')+' humming';$('project-count').textContent=s.projects.length+' / '+PROJECTS.length+' creations shipped';
@@ -90,7 +101,7 @@
  document.querySelectorAll('[data-tab]').forEach(button=>button.addEventListener('click',()=>{activeTab=button.dataset.tab;document.querySelectorAll('[data-tab]').forEach(b=>{const selected=b===button;b.classList.toggle('active',selected);b.setAttribute('aria-selected',String(selected));});buildShop();}));
  document.querySelector('.tabs').addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;const tabs=[...document.querySelectorAll('[data-tab]')],i=tabs.indexOf(document.activeElement);if(i<0)return;e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;tabs[next].focus();tabs[next].click();});
  document.querySelectorAll('[data-qty]').forEach(b=>b.addEventListener('click',()=>{quantity=Number(b.dataset.qty);document.querySelectorAll('[data-qty]').forEach(button=>{const yes=Number(button.dataset.qty)===quantity;button.classList.toggle('selected',yes);button.setAttribute('aria-pressed',String(yes));});updateShop();}));
- $('shop-items').addEventListener('click',e=>{const button=e.target.closest('[data-buy]');if(!button||button.disabled)return;const index=Number(button.dataset.buy);let result;if(activeTab==='hardware')result=game.buyHardware(index,quantity);else if(activeTab==='agents')result=game.buyAgent(index,quantity);else if(activeTab==='upgrades')result=game.buyUpgrade(UPGRADES[index].id);else result=game.buildProject(PROJECTS[index].id);handle(result);scene?.burst(3);});
+ $('shop-items').addEventListener('click',e=>{const button=e.target.closest('[data-buy]');if(!button||button.disabled)return;const entry=shopEntries()[Number(button.dataset.buy)];if(!entry)return;const {kind,item,index}=entry;let result;if(kind==='hardware')result=game.buyHardware(index,quantity);else if(kind==='agent')result=game.buyAgent(index,quantity);else if(kind==='upgrade')result=game.buyUpgrade(item.id);else result=game.buildProject(item.id);handle(result);scene?.burst(3);});
  $('personality').addEventListener('change',()=>handle(game.setPersonality($('personality').value)));
  $('cook').addEventListener('click',()=>handle(game.s.cook?game.collectCook():game.startCook()));
  $('prompt-submit').addEventListener('click',()=>{const result=game.choosePrompt(Number($('prompt-a').value),Number($('prompt-b').value),Number($('prompt-c').value));if(result.ok)$('prompt-result').textContent=result.title+'. '+result.message;handle(result);});
@@ -99,7 +110,7 @@
  $('sound').addEventListener('click',()=>{prefs.sound=!prefs.sound;sound(true);save();render();});
  function showDialog(html){$('dialog-content').innerHTML=html;if(!$('dialog').open)$('dialog').showModal();}
  $('dialog-close').addEventListener('click',()=>$('dialog').close());
- $('help').addEventListener('click',()=>showDialog(`<h2>Your first million starts here.</h2><p>Click <strong>Generate Credits</strong> or press Space. Buy hardware and AI agents to earn credits every second.</p><ul><li><strong>Upgrades</strong> multiply clicking and passive production.</li><li><strong>Projects</strong> add bonuses to all income. Collect all ${PROJECTS.length}.</li><li><strong>Personalities</strong> are free to switch. Match one to your strategy.</li><li><strong>Let it cook</strong> gives a risk-free response for 6 seconds, then risks halving that response’s reward. It never spends your credits.</li><li><strong>Prompt Lab</strong> pays a bonus and hides secret combinations.</li><li><strong>New generations</strong> reset your setup for intelligence: +25% income per point, forever.</li></ul><p>Progress saves on this browser. Your machines earn for up to 4 hours while you’re away. These are fictional game credits.</p>`));
+ $('help').addEventListener('click',()=>showDialog(`<h2>Your first million starts here.</h2><p>Click <strong>Generate Credits</strong> or press Space. Buy hardware and AI agents to earn credits every second.</p><ul><li><strong>Clicks</strong> has upgrades that only improve credits per click.</li><li><strong>Hardware</strong> has machines and upgrades that only improve hardware income.</li><li><strong>Agents</strong> has workers and upgrades that only improve agent income. Their earnings are separate from hardware.</li><li><strong>Projects</strong> are clearly marked global bonuses for all three income sources. Collect all ${PROJECTS.length}.</li><li><strong>Personalities</strong> are free to switch. Match one to your strategy.</li><li><strong>Let it cook</strong> gives a risk-free response for 6 seconds, then risks halving that response’s reward. It never spends your credits.</li><li><strong>Prompt Lab</strong> pays a bonus and hides secret combinations.</li><li><strong>New generations</strong> reset your setup for intelligence: +25% income per point, forever.</li></ul><p>Progress saves on this browser. Your machines earn for up to 4 hours while you’re away. These are fictional game credits.</p>`));
  $('prestige').addEventListener('click',()=>{const gain=game.stats().prestigeGain;if(gain<1)return;showDialog(`<h2>Launch the next generation?</h2><p>You’ll gain <strong>${fmt(gain)} intelligence</strong>, worth +${fmt(gain*25)}% to your base income permanently.</p><p>Your credits, hardware, agents, upgrades, and creations reset. You keep your intelligence, discoveries, rival victories, and lifetime earnings.</p><button id="confirm-prestige" class="secondary">Launch generation ${game.s.generation+1} <span>↗</span></button>`);$('confirm-prestige').addEventListener('click',()=>{$('dialog').close();handle(game.prestige());buildShop();render();toast('Fresh model. Bigger possibilities.');});});
  function settingsDialog(){showDialog(`<h2>Your lab, your settings.</h2><div class="dialog-stats"><span>Lifetime credits <b>${fmt(game.s.totalEarned)}</b></span><span>Clicks <b>${fmt(game.s.clicks)}</b></span><span>Discoveries <b>${game.s.discoveries?.length||0}</b></span><span>Generation <b>${game.s.generation}</b></span></div><label class="check-row"><input type="checkbox" id="motion-setting" ${prefs.reducedMotion?'checked':''}> Reduce animation</label><p>Autosave is local to this browser. Export a backup to move your progress to another computer. Offline earnings are capped at 4 hours.</p><button class="secondary" id="save-now">Save now <span>↗</span></button><button class="secondary" id="export-save">Export save <span>↓</span></button><button class="secondary" id="import-save">Import save <span>↑</span></button><input id="import-file" type="file" accept="application/json,.json"><button class="secondary danger" id="reset-game">Reset all progress</button>`);
   $('motion-setting').addEventListener('change',()=>{prefs.reducedMotion=$('motion-setting').checked;lastScene='';save();render();});

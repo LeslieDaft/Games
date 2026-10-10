@@ -16,24 +16,50 @@
   ].map(x => Object.freeze({ ...x, baseCost: x.cost }));
 
   const AGENTS = [
-    { id: 'intern', name: 'Click intern', description: 'A tiny agent with a very large coffee.', icon: '🤖', cost: 25, cps: 0.3, growth: 1.14 },
+    { id: 'intern', name: 'AI intern', description: 'A tiny agent with a very large coffee.', icon: '🤖', cost: 25, cps: 0.3, growth: 1.14 },
     { id: 'debugger', name: 'Bug whisperer', description: 'Fixes one bug. Politely negotiates with the other nine.', icon: '🪲', cost: 6000, cps: 35, growth: 1.16 },
     { id: 'director', name: 'Prompt director', description: 'Asks your agents to “make it pop.” Somehow it works.', icon: '🎬', cost: 710000, cps: 1200, growth: 1.18 },
     { id: 'architect', name: 'Agent architect', description: 'An AI that manages AIs that manage other AIs.', icon: '🧠', cost: 26000000, cps: 15000, growth: 1.20 }
   ].map(x => Object.freeze({ ...x, baseCost: x.cost }));
 
   const UPGRADES = [
-    { id: 'enter', name: 'Mechanical Enter key', description: 'Base click power earns 2× credits.', icon: '⌨️', cost: 75, clickMult: 2, cpsMult: 1 },
-    { id: 'cooling', name: 'Actually useful cooling', description: 'All automatic production earns 1.5×.', icon: '❄️', cost: 500, clickMult: 1, cpsMult: 1.5 },
-    { id: 'context', name: 'Longer context window', description: 'Base click power earns another 2×.', icon: '🪟', cost: 4200, clickMult: 2, cpsMult: 1 },
-    { id: 'batch', name: 'Batch processing', description: 'All automatic production earns another 2×.', icon: '📦', cost: 37000, clickMult: 1, cpsMult: 2 },
-    { id: 'turbo', name: 'Turbo tokens', description: 'Base click power earns 3×. Your Enter key may file a complaint.', icon: '⚡', cost: 230000, clickMult: 3, cpsMult: 1 },
-    { id: 'quantize', name: 'Smaller, smarter models', description: 'All automatic production earns another 2×.', icon: '🔬', cost: 1600000, clickMult: 1, cpsMult: 2 },
-    { id: 'parallel', name: 'Parallel universes', description: 'Base click power and automatic production earn 2×.', icon: '🌀', cost: 17000000, clickMult: 2, cpsMult: 2 },
-    { id: 'inference', name: 'Impossible inference', description: 'Base click power earns 5×; automatic production earns 1.5×.', icon: '💎', cost: 290000000, clickMult: 5, cpsMult: 1.5 },
-    { id: 'neural', name: 'Neural overdrive', description: 'Base click power and automatic production earn 3×.', icon: '🌐', cost: 9100000000, clickMult: 3, cpsMult: 3 },
-    { id: 'infinite', name: '“Unlimited” plan', description: 'Base click power and production earn 5×. Fair use still applies.', icon: '♾️', cost: 610000000000, clickMult: 5, cpsMult: 5 }
-  ].map(Object.freeze);
+    { id: 'enter', category: 'click', name: 'Mechanical Enter key', description: 'Manual clicks earn 2× credits.', icon: '⌨️', cost: 75, clickMult: 2 },
+    { id: 'context', category: 'click', name: 'Longer context window', description: 'Manual clicks earn another 5×.', icon: '🪟', cost: 4200, clickMult: 5 },
+    { id: 'turbo', category: 'click', name: 'Turbo tokens', description: 'Manual clicks earn another 10×. Your Enter key may file a complaint.', icon: '⚡', cost: 230000, clickMult: 10 },
+    { id: 'parallel', category: 'click', name: 'Parallel prompts', description: 'Manual clicks earn another 20×.', icon: '🌀', cost: 17000000, clickMult: 20 },
+    { id: 'inference', category: 'click', name: 'Impossible inference', description: 'Manual clicks earn another 50×.', icon: '💎', cost: 290000000, clickMult: 50 },
+    { id: 'neural', category: 'click', name: 'Neural fingertips', description: 'Manual clicks earn another 100×.', icon: '🌐', cost: 9100000000, clickMult: 100 },
+    { id: 'infinite', category: 'click', name: '“Unlimited” clicking', description: 'Manual clicks earn another 200×. Fair use still applies.', icon: '♾️', cost: 610000000000, clickMult: 200 },
+
+    { id: 'cooling', category: 'hardware', name: 'Actually useful cooling', description: 'Hardware production earns 1.5×.', icon: '❄️', cost: 500, hardwareMult: 1.5 },
+    { id: 'batch', category: 'hardware', name: 'Hardware batching', description: 'Hardware production earns another 2×.', icon: '📦', cost: 37000, hardwareMult: 2 },
+    { id: 'quantize', category: 'hardware', name: 'Compact compute', description: 'Hardware production earns another 2×.', icon: '🔬', cost: 1600000, hardwareMult: 2 },
+    { id: 'hardware-parallel', category: 'hardware', name: 'Parallel processors', description: 'Hardware production earns another 2×.', icon: '🧩', cost: 17000000, hardwareMult: 2 },
+    { id: 'hardware-inference', category: 'hardware', name: 'Inference accelerators', description: 'Hardware production earns another 1.5×.', icon: '💠', cost: 290000000, hardwareMult: 1.5 },
+    { id: 'hardware-neural', category: 'hardware', name: 'Neural circuitry', description: 'Hardware production earns another 3×.', icon: '🔌', cost: 9100000000, hardwareMult: 3 },
+    { id: 'hardware-infinite', category: 'hardware', name: 'Limitless processors', description: 'Hardware production earns another 5×.', icon: '🛸', cost: 610000000000, hardwareMult: 5 },
+
+    { id: 'agent-cooling', category: 'agent', name: 'Coffee break protocol', description: 'Agent production earns 1.5×.', icon: '☕', cost: 500, agentMult: 1.5 },
+    { id: 'agent-batch', category: 'agent', name: 'Task batching', description: 'Agent production earns another 2×.', icon: '📋', cost: 37000, agentMult: 2 },
+    { id: 'agent-quantize', category: 'agent', name: 'Smarter agent models', description: 'Agent production earns another 2×.', icon: '📚', cost: 1600000, agentMult: 2 },
+    { id: 'agent-parallel', category: 'agent', name: 'Parallel teamwork', description: 'Agent production earns another 2×.', icon: '🤝', cost: 17000000, agentMult: 2 },
+    { id: 'agent-inference', category: 'agent', name: 'Agent intuition', description: 'Agent production earns another 1.5×.', icon: '💡', cost: 290000000, agentMult: 1.5 },
+    { id: 'agent-neural', category: 'agent', name: 'Hive intelligence', description: 'Agent production earns another 3×.', icon: '🐝', cost: 9100000000, agentMult: 3 },
+    { id: 'agent-infinite', category: 'agent', name: 'Infinite delegation', description: 'Agent production earns another 5×.', icon: '♾️', cost: 610000000000, agentMult: 5 }
+  ].map(x => Object.freeze({ clickMult: 1, hardwareMult: 1, agentMult: 1, ...x }));
+
+  // Version 1 upgrades boosted both passive sources. Retain those purchased boosts
+  // once when converting a legacy save; all new purchases stay in one category.
+  const LEGACY_UPGRADE_MAP = Object.freeze({
+    enter: ['enter'], context: ['context'], turbo: ['turbo'],
+    cooling: ['cooling', 'agent-cooling'],
+    batch: ['batch', 'agent-batch'],
+    quantize: ['quantize', 'agent-quantize'],
+    parallel: ['parallel', 'hardware-parallel', 'agent-parallel'],
+    inference: ['inference', 'hardware-inference', 'agent-inference'],
+    neural: ['neural', 'hardware-neural', 'agent-neural'],
+    infinite: ['infinite', 'hardware-infinite', 'agent-infinite']
+  });
 
   const PROJECTS = [
     { id: 'meme', name: 'First AI meme', description: 'A cat with too many fingers. +10% income.', icon: '🐈', cost: 100, bonus: 0.10 },
@@ -81,7 +107,7 @@
   const terminal = Object.freeze({ id: 'terminal', name: 'Borrowed terminal', description: 'An empty desk. An unreasonable dream.', icon: '💾', cps: 0, cost: 0 });
 
   function fresh() {
-    return { version: 1, credits: 5, totalEarned: 5, runEarned: 5, clicks: 0,
+    return { version: 2, credits: 5, totalEarned: 5, runEarned: 5, clicks: 0,
       hardware: HARDWARE.map(() => 0), agents: AGENTS.map(() => 0), upgrades: [], projects: [],
       intelligence: 0, generation: 1, personality: 'speedster', cook: null, event: null,
       eventCooldown: 50, promptCooldown: 0, discoveries: [], rivalWins: 0, playTime: 0 };
@@ -104,6 +130,9 @@
       s.hardware = countArray(raw.hardware, HARDWARE.length);
       s.agents = countArray(raw.agents, AGENTS.length);
       s.upgrades = cleanIds(raw.upgrades, upgradeIds);
+      if (raw.version === 1) {
+        s.upgrades = cleanIds(s.upgrades.flatMap(id => LEGACY_UPGRADE_MAP[id] || [id]), upgradeIds);
+      }
       s.projects = cleanIds(raw.projects, projectIds);
       s.personality = personalityIds.has(raw.personality) ? raw.personality : 'speedster';
       s.eventCooldown = finite(raw.eventCooldown, 50, 120);
@@ -135,21 +164,24 @@
 
     stats() {
       const s = this.s;
-      let clickMult = 1, cpsMult = 1;
+      let clickMult = 1, hardwareMult = 1, agentMult = 1;
       for (const id of s.upgrades) {
         const u = UPGRADES.find(x => x.id === id);
-        if (u) { clickMult *= u.clickMult; cpsMult *= u.cpsMult; }
+        if (u) { clickMult *= u.clickMult; hardwareMult *= u.hardwareMult; agentMult *= u.agentMult; }
       }
       let projectBonus = s.projects.reduce((sum, id) => sum + (PROJECTS.find(x => x.id === id)?.bonus || 0), 0);
       if (s.personality === 'creative') projectBonus *= 2;
       const multiplier = mul(1 + s.intelligence * 0.25, 1 + projectBonus);
-      const baseCps = HARDWARE.reduce((sum, h, i) => sum + h.cps * s.hardware[i], 0) + AGENTS.reduce((sum, a, i) => sum + a.cps * s.agents[i], 0);
-      // Automatic production also improves manual work, keeping clicking useful later.
-      const perClick = mul((clickMult + baseCps * cpsMult * 0.08), mul(multiplier, s.personality === 'speedster' ? 1.5 : 1));
-      const cps = mul(mul(baseCps, cpsMult), mul(multiplier, s.personality === 'thinker' ? 1.35 : 1));
+      const hardwareBase = HARDWARE.reduce((sum, h, i) => sum + h.cps * s.hardware[i], 0);
+      const agentBase = AGENTS.reduce((sum, a, i) => sum + a.cps * s.agents[i], 0);
+      const perClick = mul(clickMult, mul(multiplier, s.personality === 'speedster' ? 1.5 : 1));
+      const passiveGlobal = mul(multiplier, s.personality === 'thinker' ? 1.35 : 1);
+      const hardwareCps = mul(mul(hardwareBase, hardwareMult), passiveGlobal);
+      const agentCps = mul(mul(agentBase, agentMult), passiveGlobal);
+      const cps = add(hardwareCps, agentCps);
       let highest = -1;
       s.hardware.forEach((n, i) => { if (n > 0) highest = i; });
-      return { perClick, cps, multiplier, projectBonus,
+      return { perClick, cps, hardwareCps, agentCps, clickMult, hardwareMult, agentMult, multiplier, projectBonus,
         prestigeGain: Math.max(0, Math.min(Number.MAX_SAFE_INTEGER - s.intelligence, Math.floor(Math.sqrt(s.runEarned / 1000000)))),
         stage: highest < 0 ? terminal : HARDWARE[highest], nextStage: HARDWARE[highest + 1] || null,
         stageIndex: highest, critChance: s.personality === 'chaotic' ? 0.20 : 0.04,
