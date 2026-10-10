@@ -75,7 +75,8 @@
   const agentCount=total(s.agents),hardwareCount=total(s.hardware);
   $('agent-count').textContent=agentCount+' agent'+(agentCount===1?'':'s')+' online';$('total-compute').textContent=hardwareCount+' machine'+(hardwareCount===1?'':'s')+' humming';$('project-count').textContent=s.projects.length+' / '+PROJECTS.length+' creations shipped';
   $('next-tip').textContent=hardwareCount===0?'Your first laptop costs 15 credits. Give that button a few clicks.':s.projects.length===0?'Ship your first creation in Projects for a permanent boost this run.':agentCount===0?'Hire an AI agent to keep credits flowing while you plan your next move.':st.prestigeGain>0?'A new generation is ready. Launch below for permanent intelligence.':'Keep building. New hardware changes your lab as your empire grows.';
-  $('personality').value=s.personality;$('personality-info').textContent=PERSONALITIES.find(p=>p.id===s.personality)?.description||'';
+  document.querySelectorAll('[data-personality]').forEach(button=>{const selected=button.dataset.personality===s.personality;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));});
+  const selectedPersonality=PERSONALITIES.find(p=>p.id===s.personality);$('personality-info').textContent=selectedPersonality?'Selected: '+selectedPersonality.name+' — '+selectedPersonality.description:'';
   const sceneState={stage,hardware:s.hardware,agents:s.agents,personality:s.personality,projects:s.projects.length,generation:s.generation,reducedMotion:prefs.reducedMotion};
   const signature=JSON.stringify(sceneState);if(scene&&signature!==lastScene){scene.setState(sceneState);lastScene=signature;}
   const cook=s.cook;const cookPercent=cook?Math.min(100,cook.elapsed/20*100):0;
@@ -102,7 +103,7 @@
  document.querySelector('.tabs').addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;const tabs=[...document.querySelectorAll('[data-tab]')],i=tabs.indexOf(document.activeElement);if(i<0)return;e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;tabs[next].focus();tabs[next].click();});
  document.querySelectorAll('[data-qty]').forEach(b=>b.addEventListener('click',()=>{quantity=Number(b.dataset.qty);document.querySelectorAll('[data-qty]').forEach(button=>{const yes=Number(button.dataset.qty)===quantity;button.classList.toggle('selected',yes);button.setAttribute('aria-pressed',String(yes));});updateShop();}));
  $('shop-items').addEventListener('click',e=>{const button=e.target.closest('[data-buy]');if(!button||button.disabled)return;const entry=shopEntries()[Number(button.dataset.buy)];if(!entry)return;const {kind,item,index}=entry;let result;if(kind==='hardware')result=game.buyHardware(index,quantity);else if(kind==='agent')result=game.buyAgent(index,quantity);else if(kind==='upgrade')result=game.buyUpgrade(item.id);else result=game.buildProject(item.id);handle(result);scene?.burst(3);});
- $('personality').addEventListener('change',()=>handle(game.setPersonality($('personality').value)));
+ document.querySelectorAll('[data-personality]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.personality!==game.s.personality)handle(game.setPersonality(button.dataset.personality));}));
  $('cook').addEventListener('click',()=>handle(game.s.cook?game.collectCook():game.startCook()));
  $('prompt-submit').addEventListener('click',()=>{const result=game.choosePrompt(Number($('prompt-a').value),Number($('prompt-b').value),Number($('prompt-c').value));if(result.ok)$('prompt-result').textContent=result.title+'. '+result.message;handle(result);});
  $('event-claim').addEventListener('click',()=>handle(game.claimEvent()));
